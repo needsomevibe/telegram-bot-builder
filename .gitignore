@@ -18,6 +18,7 @@ bots/
 !server/
 !client/
 !shared/
+!keepalive.py
 
 # Environment variables
 .env
