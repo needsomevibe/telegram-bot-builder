@@ -1,0 +1,55 @@
+services:
+  # Основное Node.js приложение
+  - type: web
+    name: telegram-bot-builder
+    env: node
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 5000
+      - key: DATABASE_URL
+        fromDatabase:
+          name: telegram-bot-builder-db
+          property: connectionString
+      - key: SESSION_SECRET
+        generateValue: true
+      - key: TELEGRAM_API_ID
+        sync: false
+      - key: TELEGRAM_API_HASH
+        sync: false
+      - key: GITHUB_PERSONAL_ACCESS_TOKEN
+        sync: false
+        optional: true
+      - key: VITE_TELEGRAM_BOT_USERNAME
+        sync: false
+        optional: true
+    healthCheckPath: /api/health
+    plan: free
+
+  # Flask сервис для keep-alive (чтобы сервис не засыпал)
+  - type: web
+    name: telegram-bot-builder-keepalive
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python keepalive.py
+    envVars:
+      - key: TARGET_URL
+        fromService:
+          type: web
+          name: telegram-bot-builder
+          property: host
+      - key: PING_INTERVAL
+        value: 300
+    plan: free
+    # Примечание: После создания основного сервиса, обновите TARGET_URL вручную
+    # на полный URL (например: https://telegram-bot-builder.onrender.com)
+
+databases:
+  - name: telegram-bot-builder-db
+    databaseName: telegram_bot_builder
+    user: telegram_bot_builder_user
+    plan: free
+
